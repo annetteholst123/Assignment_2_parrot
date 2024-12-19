@@ -1,0 +1,108 @@
+# 2. Analysis with Multiple Logistic Regression
+In this section, we will try to answer our research question using logistic regression. We demonstrate model fits and comparisons with logistic regression, accounting for additive and interaction effects. Accordingly, we draw conclusions based on regression outputs, fit comparison methods, and moderation patterns.
+
+## 2.1 Simple logistic regression: `model1`
+
+```{r model1}
+model1 <- glm(`Sleep Disorder` ~ `Physical Activity Level`, family = binomial,
+              data = sleep_data)
+summary(model1)
+```
+
+From the output we can conclude that physical activity level alone is not a significant predictor for the presence of a sleeping disorder (p = 0.1778).
+
+Now, we will specify a model with stress level as a predictor of the presence of a sleeping disorder. 
+
+```{r model2}
+model2 <- glm(`Sleep Disorder` ~ `Stress Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model2)
+```
+
+We observe that stress level is a significant predictor (p < 0.001). 
+
+Next, we will specify a model with BMI category as a predictor for the presence of a sleep disorder. 
+
+```{r model3}
+model3 <- glm(`Sleep Disorder` ~ `BMI Category`,
+              family = binomial,
+              data = sleep_data)
+summary(model3)
+```
+We observe that this variable is also a significant predictor (p < 0.001). Now, we will compare these three models to see which of these is the best fit. 
+
+```{r compare 2 and 3}
+AIC(model1, model2, model3)
+BIC(model1, model2, model3)
+```
+
+Both these tests result in the lowest value for model 3, meaning that the model with BMI category as a predictor variable is the best fit. We will continue with model 3 and see if we can add to this model. First, we will specify a model with both BMI category and stress level as predictors. 
+
+```{r model4}
+model4 <- glm(`Sleep Disorder` ~ `BMI Category` + `Stress Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model4)
+```
+
+To see if this model is a better fit than our current best model (model 3), we use ANOVA. 
+
+```{r compare 3 and 4}
+anova(model3, model4, test = "LRT")
+```
+
+From this, we conclude that adding stress level as a predictor to the model does not significantly improve the model.
+
+Next, we will specify a model where we add the predictor physical activity level to the model with BMI category as a predictor. 
+
+```{r model5}
+model5 <- glm(`Sleep Disorder` ~ `BMI Category` + `Physical Activity Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model5)
+```
+
+To check if this model is a better fit than our current best model (model 3), we again use the ANOVA test. 
+
+```{r compare 3 and 5}
+anova(model3, model5, test = "LRT")
+```
+
+Once again, we conclude that adding physical activity level as a predictor does not significantly improve our model. 
+
+Now, we want to check if there is a significant interaction effect between BMI category and stress level. 
+
+```{r model6}
+model6 <- glm(`Sleep Disorder` ~ `BMI Category` * `Stress Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model6)
+```
+
+To check if this model is a better fit than our current model, we use the ANOVA test again. 
+
+```{r compare 3 and 6}
+anova(model3, model6, test = "LRT")
+```
+
+Again, the model with the interaction effect does not significantly improve on our current best model. 
+
+Lastly, we want to check if there is a significant interaction effect between BMI category and physical activity level. 
+
+```{r model7}
+model7 <- glm(`Sleep Disorder` ~ `BMI Category` * `Physical Activity Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model7)
+```
+
+Again, we compare this model to our current best model using the ANOVA test. 
+
+```{r compare 3 and 7}
+anova(model3, model7, test = "LRT")
+```
+
+Again, the model including the interaction effect between BMI category and physical activity level is not significantly better than the model with BMI category as a predictor. 
+
+Therefore, we conclude that the model with BMI category alone as a predictor variable is our best model. 
