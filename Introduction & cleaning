@@ -1,0 +1,94 @@
+---
+title: "Assignment 2"
+output: html_document
+author: "Daphne Ploeg (7483082), Menno Zoetbrood (1084720), Eileen Chen (4966791), Annette Holst (2861305)"
+date: "2024-01-..."
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = TRUE, message = FALSE)
+library(tidyverse)
+library(MLmetrics)
+library(knitr)
+library(kableExtra)
+```
+
+# 1. Introduction
+For this assignment, we used the 'Sleep Health and Lifestyle Dataset', which is available on kaggle. 
+```{r data import}
+sleep_data <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
+```
+
+This dataset contains information from 374 different responses, and does not contain any missing data (refer to code chunk below). It is important, however, to note that the data is synthetic.
+
+```{r missing values}
+anyNA(sleep_data)
+```
+
+## 1.1 Research question
+Our research question for this assignment will be: “Can physical activity level, stress level and BMI predict the presence of a sleeping disorder?”.
+
+## 1.2 Data Transformation, Inspection & Cleaning
+First, we want to check what class the relevant variables are.
+```{r class variables}
+str(sleep_data$`Physical Activity Level`)
+str(sleep_data$`Stress Level`)
+str(sleep_data$`BMI Category`)
+str(sleep_data$`Sleep Disorder`)
+```
+
+We observe the following:
+
+*   **Physical Activity Level** is a numeric predictor variable. This is measured in minutes of physical activity per day.
+
+*   **Stress Level** is a numeric predictor variable. This is measured on a scale of 1-10. 
+
+*   **BMI Category** is a character variable in the dataset. However, we want to transform this into a factor variable. 
+
+* **Sleep Disorder** is a character variable in the dataset. We also want to transform this into a factor variable. 
+
+First, we want to transform the BMI variable into a factor variable and check what the levels are. 
+
+```{r BMI factor}
+sleep_data <- sleep_data %>% 
+  mutate(`BMI Category` = as.factor(`BMI Category`))
+sleep_data %>% count(`BMI Category`)
+```
+
+We observe that the variable has 4 levels, but we decided to group the levels 'Normal' and 'Normal Weight' together as well as 'Obsese' and 'Overweight', since Obese is a relatively small category. 
+
+```{r BMI transform}
+sleep_data <- sleep_data %>% 
+  mutate(`BMI Category` = fct_recode(`BMI Category`, 
+                                 "Normal" = "Normal Weight", 
+                                 "Normal" =  "Normal",
+                                 "Overweight" = "Overweight",
+                                 "Overweight" = "Obese"
+                                  ))
+sleep_data %>% count(`BMI Category`)
+```
+
+Now, the variable 'BMI Category' contains only 2 levels: 'Normal' and 'Overweight'. 
+
+Next, we want to transform our outcome variable to a factor variable and check what the levels are. 
+
+```{r Sleep disorder factor}
+sleep_data <- sleep_data %>% 
+  mutate(`Sleep Disorder` = as.factor(`Sleep Disorder`))
+sleep_data %>% count(`Sleep Disorder`)
+```
+
+We observe that this variable has 3 levels. However, for this assignment we want a dichotomous outcome variable. Therefore, we decided to change the levels to 'No', for people that do not have a sleeping disorder, and 'Yes', for people that have either insomnia or sleep apnea. 
+
+```{r sleep disorder transform}
+sleep_data <- sleep_data %>% 
+  mutate(`Sleep Disorder` = fct_recode(`Sleep Disorder`, 
+                                 "No" = "None", 
+                                 "Yes" =  "Insomnia",
+                                 "Yes" = "Sleep Apnea",
+                                  ))
+sleep_data %>% count(`Sleep Disorder`)
+```
+
+Now, our data is prepared for the analysis. 
