@@ -1,0 +1,118 @@
+# 2. Descriptive statistics 
+
+## 2.1 Univarite Analysis
+Before we start our analysis, we want to look at the descriptive statistics of our variables. We start with the predictor variable variable 'Physical Activity Level'. 
+
+```{r histogram physical}
+ggplot(data = sleep_data) +
+  geom_histogram(aes(x = `Physical Activity Level`)) +
+  labs(title = "Distribution of Physical Activity Level", 
+       x = "Physical activity in minutes per day", 
+       y = "Frequency") +
+  theme_minimal()
+```
+From the histogram plot, we can see the distribution is not normal. This probably due to the fact that the data is synthesized. Below we will provide a table with important summary statistics of this variable. 
+
+```{r table physical}
+statistics <- data.frame(
+  Measure = c("Mean", "Median", "Variance", "Standard deviation", "IQR",
+              "Maximum", "Minimum"), 
+  Value = c(mean(sleep_data$`Physical Activity Level`), 
+  median(sleep_data$`Physical Activity Level`), 
+  var(sleep_data$`Physical Activity Level`), 
+  sd(sleep_data$`Physical Activity Level`), 
+  IQR(sleep_data$`Physical Activity Level`), 
+  min(sleep_data$`Physical Activity Level`), 
+  max(sleep_data$`Physical Activity Level`)))
+
+kable(statistics, caption = "Summary statistics of Physical Activity Level") %>% 
+  kable_minimal()
+```
+
+Next, we will do the same for the predictor variable 'Stress Level'. 
+
+```{r histogram stress}
+ggplot(data = sleep_data) +
+  geom_histogram(aes(x = `Stress Level`)) +
+  labs(title = "Distribution of Stress Level", 
+       x = "Stress level (measured on a scale of 1-10)", 
+       y = "Frequency") +
+  theme_minimal()
+```
+In this plot we can see that there is no data for the levels 1, 2, 9 and 10. So, there are no observations in the data for these levels. Other than that, the distribution seems to be quite even. Again, we will provide a table with the import summary statistics. 
+
+```{r table stress}
+statistics <- data.frame(
+  Measure = c("Mean", "Median", "Variance", "Standard deviation", "IQR",
+              "Maximum", "Minimum"), 
+  Value = c(mean(sleep_data$`Stress Level`), 
+  median(sleep_data$`Stress Level`), 
+  var(sleep_data$`Stress Level`), 
+  sd(sleep_data$`Stress Level`), 
+  IQR(sleep_data$`Stress Level`), 
+  min(sleep_data$`Stress Level`), 
+  max(sleep_data$`Stress Level`)))
+
+kable(statistics, caption = "Summary statistics of Stress Level") %>% 
+  kable_minimal()
+```
+
+Lastly, we will show the descriptive statistics for the predictor variable 'BMI Category'. 
+
+```{r barplot BMI}
+ggplot(data = sleep_data) +
+  geom_bar(aes(x = `BMI Category`)) +
+  labs(title = "Distribution of BMI Category", 
+       x = "BMI Category", 
+       y = "Frequency") +
+  theme_minimal()
+```
+From the histogram plot, we can see there are slightly more observations that are normal weight. Again, we will provide important summary statistics. Since this is a categorical variable, we provide the counts and the percentages of the levels in this variable. 
+
+```{r table bmi}
+kable(table("BMI Category" = sleep_data$`BMI Category`)) %>% 
+  kable_minimal()
+kable(table("BMI Category" =sleep_data$`BMI Category`) /nrow(sleep_data)) %>% 
+  kable_minimal()
+```
+
+## 2.2 Bivariate analysis
+For the next part, we want to inspect the relations between our predictor variables and the outcome variable. First, we will visualize the relation between Physical Activity Level and Sleep Disorder. 
+
+```{r physical relation}
+ggplot(data = sleep_data) +
+  geom_boxplot(aes(x = `Physical Activity Level`, y = `Sleep Disorder`)) +
+  labs(title = "Relation between Physical Activity Level and Sleep Disorder", 
+       x = "Physical activity in minutes per day", 
+       y = "Presence of a sleeping disorder") +
+  theme_minimal()
+```
+
+In this plot, the median of Physical Activity level is higher for people with no sleeping disorder. However, the line for the 25th percentile is much lower for these observations. Therefore, we think the relation between these variables is not yet clear. 
+
+Next, we visualize the relation between Stress Level and Sleep Disorder. 
+
+```{r stress relation}
+ggplot(data = sleep_data) +
+  geom_boxplot(aes(x = `Stress Level`, y = `Sleep Disorder`)) +
+  labs(title = "Relation between Stress Level and Sleep Disorder", 
+       x = "Stress level", 
+       y = "Presence of a sleeping disorder") +
+  theme_minimal()
+```
+Here, we clearly see that people with no sleeping disorder have lower stress levels. So, these variables seem to show a relation. 
+
+Lastly, we visualize the relation between BMI category and Sleep Disorder, using a bar plot. 
+
+```{r BMI relation}
+ggplot(data = sleep_data) +
+  geom_bar(aes(x = `BMI Category`, fill = `Sleep Disorder`), 
+           position = "dodge") +
+  labs(title = "Relation between BMI Category and Sleep Disorder", 
+       x = "BMI Category", 
+       y = "Presence of a sleeping disorder") +
+  theme_minimal()
+```
+
+Here, we see that more observations with normal weight have no sleeping disorder and from the observations with overweight, more people do have a sleeping disorder. So, these variables also seem to show a relation. 
+Hence, we would expect that a model with the variables 'BMI Category' and/or 'Stress Level' could predict the presence of a sleeping disorder. Now, we can start our analysis. 
