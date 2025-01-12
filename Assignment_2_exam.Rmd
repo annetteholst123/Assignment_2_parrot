@@ -1,0 +1,397 @@
+---
+title: "Assignment_2_exam"
+output: html_document
+date: "2025-01-09"
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+---
+title: "Assignment 2"
+output: html_document
+author: "Daphne Ploeg (7483082), Menno Zoetbrood (1084720), Eileen Chen (4966791), Annette Holst (2861305)"
+date: "2024-01-..."
+
+---
+```{r}
+install.packages("MLmetrics")
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = TRUE, message = FALSE)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+# 1. Introduction
+For this assignment, we used the 'Sleep Health and Lifestyle Dataset', which is available on kaggle. 
+```{r data import}
+sleep_data <- read_csv("~/Documents/Sleep_health_and_lifestyle_dataset.cs")
+```
+
+This dataset contains information from 374 different responses, and does not contain any missing data (refer to code chunk below). It is important, however, to note that the data is synthetic.
+
+```{r missing values}
+anyNA(sleep_data)
+```
+
+## 1.1 Research question
+Our research question for this assignment will be: “Can physical activity level, stress level and BMI predict the presence of a sleeping disorder?”.
+
+## 1.2 Data Transformation, Inspection & Cleaning
+First, we want to check what class the relevant variables are.
+```{r class variables}
+str(sleep_data$`Physical Activity Level`)
+str(sleep_data$`Stress Level`)
+str(sleep_data$`BMI Category`)
+str(sleep_data$`Sleep Disorder`)
+```
+
+We observe the following:
+
+*   **Physical Activity Level** is a numeric predictor variable. This is measured in minutes of physical activity per day.
+
+*   **Stress Level** is a numeric predictor variable. This is measured on a scale of 1-10. 
+
+*   **BMI Category** is a character variable in the dataset. However, we want to transform this into a factor variable. 
+
+* **Sleep Disorder** is a character variable in the dataset. We also want to transform this into a factor variable. 
+
+First, we want to transform the BMI variable into a factor variable and check what the levels are. 
+
+```{r BMI factor}
+sleep_data <- sleep_data %>% 
+  mutate(`BMI Category` = as.factor(`BMI Category`))
+sleep_data %>% count(`BMI Category`)
+```
+
+We observe that the variable has 4 levels, but we decided to group the levels 'Normal' and 'Normal Weight' together as well as 'Obsese' and 'Overweight', since Obese is a relatively small category. 
+
+```{r BMI transform}
+sleep_data <- sleep_data %>% 
+  mutate(`BMI Category` = fct_recode(`BMI Category`, 
+                                 "Normal" = "Normal Weight", 
+                                 "Normal" =  "Normal",
+                                 "Overweight" = "Overweight",
+                                 "Overweight" = "Obese"
+                                  ))
+sleep_data %>% count(`BMI Category`)
+```
+
+Now, the variable 'BMI Category' contains only 2 levels: 'Normal' and 'Overweight'. 
+
+Next, we want to transform our outcome variable to a factor variable and check what the levels are. 
+
+```{r Sleep disorder factor}
+sleep_data <- sleep_data %>% 
+  mutate(`Sleep Disorder` = as.factor(`Sleep Disorder`))
+sleep_data %>% count(`Sleep Disorder`)
+```
+
+We observe that this variable has 3 levels. However, for this assignment we want a dichotomous outcome variable. Therefore, we decided to change the levels to 'No', for people that do not have a sleeping disorder, and 'Yes', for people that have either insomnia or sleep apnea. 
+
+```{r sleep disorder transform}
+sleep_data <- sleep_data %>% 
+  mutate(`Sleep Disorder` = fct_recode(`Sleep Disorder`, 
+                                 "No" = "None", 
+                                 "Yes" =  "Insomnia",
+                                 "Yes" = "Sleep Apnea",
+                                  ))
+sleep_data %>% count(`Sleep Disorder`)
+```
+# 2. Descriptive statistics 
+## 2.1 Univarite Analysis
+Before we start our analysis, we want to look at the descriptive statistics of our variables. We start with the predictor variable variable 'Physical Activity Level'. 
+```{r histogram physical}
+ggplot(data = sleep_data) +
+  geom_histogram(aes(x = `Physical Activity Level`)) +
+  labs(title = "Distribution of Physical Activity Level", 
+       x = "Physical activity in minutes per day", 
+       y = "Frequency") +
+  theme_minimal()
+```
+From the histogram plot, we can see the distribution is not normal. This probably due to the fact that the data is synthesized. Below we will provide a table with important summary statistics of this variable. 
+```{r table physical}
+statistics <- data.frame(
+  Measure = c("Mean", "Median", "Variance", "Standard deviation", "IQR",
+              "Maximum", "Minimum"), 
+  Value = c(mean(sleep_data$`Physical Activity Level`), 
+  median(sleep_data$`Physical Activity Level`), 
+  var(sleep_data$`Physical Activity Level`), 
+  sd(sleep_data$`Physical Activity Level`), 
+  IQR(sleep_data$`Physical Activity Level`), 
+  min(sleep_data$`Physical Activity Level`), 
+  max(sleep_data$`Physical Activity Level`)))
+kable(statistics, caption = "Summary statistics of Physical Activity Level") %>% 
+  kable_minimal()
+```
+Next, we will do the same for the predictor variable 'Stress Level'. 
+```{r histogram stress}
+ggplot(data = sleep_data) +
+  geom_histogram(aes(x = `Stress Level`)) +
+  labs(title = "Distribution of Stress Level", 
+       x = "Stress level (measured on a scale of 1-10)", 
+       y = "Frequency") +
+  theme_minimal()
+```
+In this plot we can see that there is no data for the levels 1, 2, 9 and 10. So, there are no observations in the data for these levels. Other than that, the distribution seems to be quite even. Again, we will provide a table with the import summary statistics. 
+```{r table stress}
+statistics <- data.frame(
+  Measure = c("Mean", "Median", "Variance", "Standard deviation", "IQR",
+              "Maximum", "Minimum"), 
+  Value = c(mean(sleep_data$`Stress Level`), 
+  median(sleep_data$`Stress Level`), 
+  var(sleep_data$`Stress Level`), 
+  sd(sleep_data$`Stress Level`), 
+  IQR(sleep_data$`Stress Level`), 
+  min(sleep_data$`Stress Level`), 
+  max(sleep_data$`Stress Level`)))
+kable(statistics, caption = "Summary statistics of Stress Level") %>% 
+  kable_minimal()
+```
+Lastly, we will show the descriptive statistics for the predictor variable 'BMI Category'. 
+```{r barplot BMI}
+ggplot(data = sleep_data) +
+  geom_bar(aes(x = `BMI Category`)) +
+  labs(title = "Distribution of BMI Category", 
+       x = "BMI Category", 
+       y = "Frequency") +
+  theme_minimal()
+```
+From the histogram plot, we can see there are slightly more observations that are normal weight. Again, we will provide important summary statistics. Since this is a categorical variable, we provide the counts and the percentages of the levels in this variable. 
+```{r table bmi}
+kable(table("BMI Category" = sleep_data$`BMI Category`)) %>% 
+  kable_minimal()
+kable(table("BMI Category" =sleep_data$`BMI Category`) /nrow(sleep_data)) %>% 
+  kable_minimal()
+```
+## 2.2 Bivariate analysis
+For the next part, we want to inspect the relations between our predictor variables and the outcome variable. First, we will visualize the relation between Physical Activity Level and Sleep Disorder. 
+```{r physical relation}
+ggplot(data = sleep_data) +
+  geom_boxplot(aes(x = `Physical Activity Level`, y = `Sleep Disorder`)) +
+  labs(title = "Relation between Physical Activity Level and Sleep Disorder", 
+       x = "Physical activity in minutes per day", 
+       y = "Presence of a sleeping disorder") +
+  theme_minimal()
+```
+In this plot, the median of Physical Activity level is higher for people with no sleeping disorder. However, the line for the 25th percentile is much lower for these observations. Therefore, we think the relation between these variables is not yet clear. 
+Next, we visualize the relation between Stress Level and Sleep Disorder. 
+```{r stress relation}
+ggplot(data = sleep_data) +
+  geom_boxplot(aes(x = `Stress Level`, y = `Sleep Disorder`)) +
+  labs(title = "Relation between Stress Level and Sleep Disorder", 
+       x = "Stress level", 
+       y = "Presence of a sleeping disorder") +
+  theme_minimal()
+```
+Here, we clearly see that people with no sleeping disorder have lower stress levels. So, these variables seem to show a relation. 
+Lastly, we visualize the relation between BMI category and Sleep Disorder, using a bar plot. 
+```{r BMI relation}
+ggplot(data = sleep_data) +
+  geom_bar(aes(x = `BMI Category`, fill = `Sleep Disorder`), 
+           position = "dodge") +
+  labs(title = "Relation between BMI Category and Sleep Disorder", 
+       x = "BMI Category", 
+       y = "Presence of a sleeping disorder") +
+  theme_minimal()
+```
+Here, we see that more observations with normal weight have no sleeping disorder and from the observations with overweight, more people do have a sleeping disorder. So, these variables also seem to show a relation. 
+Hence, we would expect that a model with the variables 'BMI Category' and/or 'Stress Level' could predict the presence of a sleeping disorder. Now, we can start our analysis. 
+Now, our data is prepared for the analysis. 
+
+# 3. Analysis with Multiple Logistic Regression
+In this section, we will try to answer our research question using logistic regression. We demonstrate model fits and comparisons with logistic regression, accounting for additive and interaction effects. Accordingly, we draw conclusions based on regression outputs, fit comparison methods, and moderation patterns.
+
+## 3.1 Simple logistic regression: `model1`
+
+```{r model1}
+model1 <- glm(`Sleep Disorder` ~ `Physical Activity Level`, family = binomial,
+              data = sleep_data)
+summary(model1)
+```
+
+From the output we can conclude that physical activity level alone is not a significant predictor for the presence of a sleeping disorder (p = 0.1778).
+
+Now, we will specify a model with stress level as a predictor of the presence of a sleeping disorder. 
+
+```{r model2}
+model2 <- glm(`Sleep Disorder` ~ `Stress Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model2)
+```
+
+We observe that stress level is a significant predictor (p < 0.001). 
+
+Next, we will specify a model with BMI category as a predictor for the presence of a sleep disorder. 
+
+```{r model3}
+model3 <- glm(`Sleep Disorder` ~ `BMI Category`,
+              family = binomial,
+              data = sleep_data)
+summary(model3)
+```
+We observe that this variable is also a significant predictor (p < 0.001). Now, we will compare these three models to see which of these is the best fit. 
+
+```{r compare 2 and 3}
+AIC(model1, model2, model3)
+BIC(model1, model2, model3)
+```
+
+Both these tests result in the lowest value for model 3, meaning that the model with BMI category as a predictor variable is the best fit. We will continue with model 3 and see if we can add to this model. First, we will specify a model with both BMI category and stress level as predictors. 
+
+```{r model4}
+model4 <- glm(`Sleep Disorder` ~ `BMI Category` + `Stress Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model4)
+```
+
+To see if this model is a better fit than our current best model (model 3), we use ANOVA. 
+
+```{r compare 3 and 4}
+anova(model3, model4, test = "LRT")
+```
+
+From this, we conclude that adding stress level as a predictor to the model does not significantly improve the model.
+
+Next, we will specify a model where we add the predictor physical activity level to the model with BMI category as a predictor. 
+
+```{r model5}
+model5 <- glm(`Sleep Disorder` ~ `BMI Category` + `Physical Activity Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model5)
+```
+
+To check if this model is a better fit than our current best model (model 3), we again use the ANOVA test. 
+
+```{r compare 3 and 5}
+anova(model3, model5, test = "LRT")
+```
+
+Once again, we conclude that adding physical activity level as a predictor does not significantly improve our model. 
+
+Now, we want to check if there is a significant interaction effect between BMI category and stress level. 
+
+```{r model6}
+model6 <- glm(`Sleep Disorder` ~ `BMI Category` * `Stress Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model6)
+```
+
+To check if this model is a better fit than our current model, we use the ANOVA test again. 
+
+```{r compare 3 and 6}
+anova(model3, model6, test = "LRT")
+```
+
+Again, the model with the interaction effect does not significantly improve on our current best model. 
+
+Lastly, we want to check if there is a significant interaction effect between BMI category and physical activity level. 
+
+```{r model7}
+model7 <- glm(`Sleep Disorder` ~ `BMI Category` * `Physical Activity Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model7)
+```
+
+Again, we compare this model to our current best model using the ANOVA test. 
+
+```{r compare 3 and 7}
+anova(model3, model7, test = "LRT")
+```
+
+Again, the model including the interaction effect between BMI category and physical activity level is not significantly better than the model with BMI category as a predictor. 
+
+Therefore, we conclude that the model with BMI category alone as a predictor variable is our best model. 
+
+```{r model4}
+model4 <- glm(`Sleep Disorder` ~ `BMI Category` + `Stress Level`,
+              family = binomial,
+              data = sleep_data)
+summary(model4)
+```
+
+```{r}
+install.packages("caret") 
+library(caret)
+```
+
+
+```{r}
+## Estimate the logistic regression model:
+glmFit <- glm(`Sleep Disorder` ~ `BMI Category` + `Stress Level`,
+data = sleep_data,
+family = "binomial")
+
+## Save the linear predictor estimates:
+sleep_data$etaHat <- predict(glmFit, type = "link")
+summary(glmFit, -1)
+```
+```{r}
+
+## Calculate the raw residuals
+sleep_data$e <-
+resid(glmFit, type = "response")
+## Plot raw residuals vs. fitted
+## linear predictor values:
+ggplot(sleep_data, aes(etaHat, e)) +
+geom_point() +
+geom_smooth() +
+theme_classic() +
+xlab("Linear Predictor") +
+ylab("Raw Residual")
+```
+
+```{r}
+# Check if 'Sleep Disorder' binairy is 
+levels(sleep_data$`Sleep Disorder`)
+table(sleep_data$`Sleep Disorder`)
+
+```
+```{r}
+# Residuele plot
+plot(predict(model4, type = "link"), residuals(model4, type = "response"),
+     xlab = "Linear Predictor",
+     ylab = "Raw Residuals",
+     main = "Residual Plot")
+abline(h = 0, col = "red", lwd = 2)
+
+```
+```{r}
+model4_full <- glm(`Sleep Disorder` ~ `BMI Category` + `Stress Level` + Age + Gender,
+                   family = binomial,
+                   data = sleep_data)
+```
+```{r}
+# Likelihood ratio test
+anova(model4, model4_full, test = "Chisq")
+
+# Vergelijk AIC-waarden
+AIC(model4, model4_full)
+
+```
+```{r}
+# Histogram van voorspelde kansen
+predicted_probs <- predict(model4_full, type = "response")
+hist(predicted_probs, breaks = 20, main = "Histogram of Predicted Probabilities",
+     xlab = "Predicted Probability", col = "lightblue", border = "black")
+```
+
