@@ -1,0 +1,55 @@
+# 5. Interpretation and classification
+
+## 5.1 Interpretation
+
+The model we ended up with was model 4. Let's take a look at the output of this model again. 
+
+```{r summary 4}
+summary(model4)
+```
+
+The coefficient estimates for BMI Category (Overweight) and Stress level are 4.48 and 0.15 respectively. 
+
+The base category for the variable BMI category is normal weight. This relates to the intercept, meaning that for a person with normal weight and a stress level of 0, the expected log odds of having a sleeping disorder are -3.34.
+
+The BMI category significantly predicts the probability of having a sleeping disorder (p < 0.001). The expected log odds of having a sleeping disorder are 4.48 units higher for people with overweight (controlling for stress level) than for people with normal weight.
+
+Stress level does not significantly predict the probability of having a sleeping disorder (p > 0.05). This coefficient is 0.15, meaning that for each additional unit in stress level, the expected log-odds of having a sleeping disorder increase with 0.15 units (controlling for BMI category). 
+
+To make the interpretation clearer, we transform the log-odds to odds. 
+
+```{r odds}
+exp(coef(model4))
+```
+So, the expected odds of having a sleeping disorder for people with normal weight and stress level 0 are approximately 0.04. The expected odds for people with overweight are 88.62 times the expected odds for people with normal weight, so the odds for people with overweight increase by 8762%. For every increase in stress level, the expected odds of having a sleeping disorder change by a factor of 1.17, so the odds increase with 17%. 
+
+## 5.2 Classification 
+
+To test how well our model can predict the outcome variable we want to create a confusion matrix. First, we need to obtain the predicted probabilities. 
+
+```{r predict }
+pred <- predict(model4, type = "response")
+class <- ifelse(pred > 0.5, "Yes", "No")
+  # If the predicted probability is higher than 0.5, we classify the observation as having the sleeping disorder.
+
+table(Predicted = class, True = sleep_data$`Sleep Disorder`)
+```
+
+From this confusion matrix, we can see the number of true negatives (200), the number of true positives (139) and the number of false negatives (16) and false positives (19). We will now calculate some useful metrics, including the accuracy, sensitivity, specificity, false positive rate, and positive/negative predictive values, to evaluate our model's performance. 
+
+```{r sensitivity etc.}
+metrices <- data.frame(
+  Metric = c("Accuracy", "Sensitivity", "Specificity", "False Positive Rate", "Positive Predictive values", "Negative Predictive Values"), 
+  Value = c(((139 + 200)/(200+16+19+139)), 
+            (139 / (139 + 16)),
+            (200 / (200 + 19)),
+            (19 / (200 + 19)), 
+            (139 / (139 + 19)),
+            (200 / (200 + 16))))
+kable(metrices, caption = "Metrics of the confusion matrix") %>% 
+  kable_minimal()
+```
+
+So, our model correctly classified 91% of the observations. 90% of the observations that do have sleeping disorder are correctly classified, and 91% of the observations that do not have a sleeping disorder are correctly classified as well. 9% of the observations that do not have a sleeping disorder are incorrectly classified as having a sleeping disorder. The positive predictive values means there is a 88% chance that an observation that is classified as having a sleeping disorder, does in fact have a sleeping disorder. The negative predictive values indicates that there is a 93% chance that an observation classified as not having a sleeping disorder, does indeed not have a sleeping disorder. 
+
+
