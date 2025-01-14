@@ -1,0 +1,63 @@
+---
+title: "Assumptions 1 & 2, and influential cases and observations"
+author: "Menno Zoetbrood"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# 3. Checking the data for assumptions (logistic regression)
+In this section, we will continue with our best model (model4), and check if this model meets the assumptions for logistic regression.
+
+# 3.1 Linearity Assumption
+To check if the continuous predictors are linearly related to the logit of the outcome variable. 
+
+```{r}
+plot(model4, 1)
+```
+
+Observing the plot, we can see that the data does give a linear relation. However, because our data is synthetic, we can see a lot of variety in the data distribution. Also, the variation around the estimated regression line is not constant, suggesting that the assumption of equal error variances in not reasonable.
+Therefore, we cannot conclude that our model has met the assumption of linearity between the continuous predictors and the logit of the outcome variable.
+
+# 3.2 Full Rank Assumption
+Next, we want to check if the predictors do not have a very high correlation with one another. This can be checked by analysing the variance inflation factor (VIF) values.
+
+```{r}
+car::vif(model4)
+```
+
+Looking at the results from the VIF values, we can see that both predictors are VIF < 10, indicating that there is no severe multicollinearity in our model. Thus, the assumption is met for the model.
+
+Additionally, we check whether the number of observations are higher than the number of predictors.
+
+```{r}
+#We start by making a row consisting of the number of observations
+n <- nrow(sleep_data)
+
+#Then, we will make a row consisting of the number of predictors (including dummy variables for categorical variables)
+p <- length(coef(model4)) - 1 # -1 because the intercept is not a variable
+
+#Lastly, we check whether the model has N > P
+if (n > p) {
+  print("The model satisfies the assumption N > P.")
+} else {
+  print("The model violates the assumption N > P.")
+}
+```
+
+After checking the results, we can see that the model met the assumption of N > P as well.
+
+# 4 Influential values or outliers
+In addition to the three assumptions, we should also analyse any influential values or outliers. This can be visualised using Cook's distance and the Residuals vs Leverage plot. 
+
+```{r}
+plot(model4, which = 4)
+```
+
+Analysing the plot we can see no values above 1, indicating that no points in our plot are highly influential points. However, because Cook's distance does not gives us any information about outliers which are not influential cases. Therefore, we need to inspect the Residuals vs Leverage plot as well.
+
+```{r}
+plot(model4, which = 5)
+```
+
+Analysing this plot, we see that observation number 316 falls outside of Cook's distance, meaning it should be considered an influential observation. This means that if we removed this observation from our dataset and fit the regression model again, the coefficients of the model would change significantly.
+However, as explain earlier, our dataset is synthetic, meaning that this influential value is the result of the dataset itself. Therefore, removing it would not fix the syntheticity of our dataset. As a result, we decided not to remove observation number 316.
